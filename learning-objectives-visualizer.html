@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Objectives and Path Visualizer</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        #root {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            color: #718096;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+        
+        .info-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            color: #718096;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .tab:hover {
+            color: #667eea;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tree-container {
+            margin-top: 20px;
+        }
+        
+        .objective-node {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .objective-node:hover {
+            background: #edf2f7;
+            transform: translateX(5px);
+        }
+        
+        .objective-node.atomic {
+            border-left-color: #48bb78;
+            background: #f0fff4;
+        }
+        
+        .objective-node.atomic:hover {
+            background: #e6ffed;
+        }
+        
+        .objective-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 8px;
+        }
+        
+        .objective-id {
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #667eea;
+            font-weight: bold;
+            padding: 2px 8px;
+            background: white;
+            border-radius: 4px;
+        }
+        
+        .objective-title {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 1.05em;
+            flex: 1;
+            margin: 0 15px;
+        }
+        
+        .objective-time {
+            font-size: 0.9em;
+            color: #718096;
+            white-space: nowrap;
+        }
+        
+        .objective-description {
+            color: #4a5568;
+            margin-top: 8px;
+            line-height: 1.5;
+            font-size: 0.95em;
+        }
+        
+        .objective-children {
+            margin-left: 30px;
+            margin-top: 10px;
+        }
+        
+        .phase-container {
+            margin-bottom: 40px;
+        }
+        
+        .phase-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .phase-number {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .phase-label {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .phase-goal {
+            font-size: 1em;
+            opacity: 0.95;
+            line-height: 1.5;
+        }
+        
+        .step-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        
+        .step-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+        
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        
+        .step-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 40px;
+        }
+        
+        .step-title {
+            flex: 1;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 0 15px;
+        }
+        
+        .step-duration {
+            font-size: 0.9em;
+            color: #718096;
+            white-space: nowrap;
+        }
+        
+        .step-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .step-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .badge-objective {
+            background: #e6f2ff;
+            color: #2c5aa0;
+        }
+        
+        .badge-activity {
+            background: #fef3e2;
+            color: #9c6f1e;
+        }
+        
+        .badge-depth {
+            background: #f0e7ff;
+            color: #6b46c1;
+        }
+        
+        .step-notes {
+            color: #4a5568;
+            line-height: 1.6;
+            font-size: 0.95em;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+            font-size: 1.1em;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 0.9em;
+        }
+        
+        .json-input-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .json-input-title {
+            font-size: 2em;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        
+        .json-input-subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .json-textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            resize: vertical;
+            margin-bottom: 20px;
+        }
+        
+        .json-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .error-message {
+            background: #fed7d7;
+            color: #9b2c2c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #fc8181;
+        }
+        
+        .success-message {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #48bb78;
+        }
+        
+        .file-input-label {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #e2e8f0;
+            color: #2d3748;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .file-input-label:hover {
+            background: #cbd5e0;
+        }
+        
+        .file-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+        
+        const defaultData = {
+  "topic": "Learning to play chess from beginner to solid casual level",
+  "audience": "Adult self-directed learner with little to no formal chess experience.",
+  "constraints": {
+    "typical_session_length_minutes": 60,
+    "total_time_per_week_hours": 5,
+    "time_horizon_weeks": 8,
+    "preferred_modalities": [
+      "videos",
+      "reading",
+      "interactive exercises",
+      "playing practice",
+      "self-review"
+    ],
+    "motivation": "Enjoy casual games with friends and online, and build toward a solid beginner/early-intermediate level of play."
+  },
+  "root_objective_id": "LO-1",
+  "objectives": [
+    {
+      "id": "LO-1",
+      "title": "Understand and play chess confidently at a beginner–intermediate level",
+      "description": "Be able to set up a board, play complete legal games, and apply basic tactics, strategy, and endgame knowledge. Build habits for ongoing practice and improvement.",
+      "estimated_time_minutes": 1400,
+      "prerequisites": [],
+      "children": [
+        "LO-1.1",
+        "LO-1.2",
+        "LO-1.3",
+        "LO-1.4",
+        "LO-1.5",
+        "LO-1.6",
+        "LO-1.7",
+        "LO-1.8"
+      ],
+      "is_atomic": false
+    },
+    {
+      "id": "LO-1.1",
+      "title": "Get oriented to the chessboard, pieces, and notation",
+      "description": "Learn how the board is organized, where pieces start, and how moves are written down. This creates a foundation for everything else.",
+      "estimated_time_minutes": 90,
+      "prerequisites": [],
+      "children": ["LO-1.1.1", "LO-1.1.2", "LO-1.1.3"],
+      "is_atomic": false
+    },
+    {
+      "id": "LO-1.1.1",
+      "title": "Recognize the board layout and coordinates",
+      "description": "Learn files, ranks, diagonals, and light vs. dark squares, plus how coordinates like e4 or a8 work. Practice by naming the coordinates of random squares and placing a piece on requested coordinates.",
+      "estimated_time_minutes": 30,
+      "prerequisites": [],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.1.2",
+      "title": "Identify pieces, starting positions, and relative value",
+      "description": "Memorize the names, symbols, and starting squares of all pieces and learn their typical relative values (e.g., pawn=1, knight/bishop=3). Practice by setting up the starting position from memory several times.",
+      "estimated_time_minutes": 30,
+      "prerequisites": ["LO-1.1.1"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.1.3",
+      "title": "Understand basic algebraic notation",
+      "description": "Learn how moves are written in algebraic notation (piece letter, square, x for captures, + for check, # for mate). Practice by writing down the moves from a short sample game or your own mini-game.",
+      "estimated_time_minutes": 30,
+      "prerequisites": ["LO-1.1.1"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.2",
+      "title": "Master movement, captures, and special moves",
+      "description": "Learn how each piece moves and captures, including pawns, and internalize special rules like castling, en passant, and promotion.",
+      "estimated_time_minutes": 150,
+      "prerequisites": ["LO-1.1"],
+      "children": ["LO-1.2.1", "LO-1.2.2", "LO-1.2.3", "LO-1.2.4"],
+      "is_atomic": false
+    },
+    {
+      "id": "LO-1.2.1",
+      "title": "Move and capture with pawns",
+      "description": "Learn how pawns move forward, capture diagonally, and can move two squares on their first move. Practice by playing simplified pawn-only games to feel their strengths and weaknesses.",
+      "estimated_time_minutes": 40,
+      "prerequisites": ["LO-1.1.1", "LO-1.1.2"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.2.2",
+      "title": "Move and capture with all pieces",
+      "description": "Learn the legal moves and capture patterns for king, queen, rooks, bishops, and knights. Practice by moving a single piece around the board to capture 'target' pieces in legal ways.",
+      "estimated_time_minutes": 40,
+      "prerequisites": ["LO-1.1.1", "LO-1.1.2"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.2.3",
+      "title": "Understand and execute castling",
+      "description": "Learn the rules for castling (when it is allowed, kingside vs queenside) and why it improves king safety and rook activity. Practice by setting up positions and deciding whether you can castle and to which side.",
+      "estimated_time_minutes": 30,
+      "prerequisites": ["LO-1.2.2"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.2.4",
+      "title": "Apply en passant and promotion rules",
+      "description": "Understand en passant captures and how pawns promote upon reaching the last rank. Practice by setting up small positions that require correct en passant decisions and promotions.",
+      "estimated_time_minutes": 40,
+      "prerequisites": ["LO-1.2.1"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.3",
+      "title": "Grasp check, checkmate, draws, and game flow",
+      "description": "Learn what it means to give check, how games end, and the different draw rules so you can play complete games correctly.",
+      "estimated_time_minutes": 125,
+      "prerequisites": ["LO-1.2"],
+      "children": ["LO-1.3.1", "LO-1.3.2", "LO-1.3.3"],
+      "is_atomic": false
+    },
+    {
+      "id": "LO-1.3.1",
+      "title": "Recognize checks and legal ways to get out of check",
+      "description": "Learn that you must never leave your king in check and the three ways to respond: capture, block, or move the king. Practice by setting up diagrams and finding all legal moves to escape check.",
+      "estimated_time_minutes": 40,
+      "prerequisites": ["LO-1.2.2"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.3.2",
+      "title": "Distinguish checkmate, stalemate, and common draw rules",
+      "description": "Learn the difference between checkmate and stalemate, and be aware of other draw conditions like threefold repetition, the 50-move rule, and insufficient material. Practice by labeling sample positions as checkmate, stalemate, or neither.",
+      "estimated_time_minutes": 40,
+      "prerequisites": ["LO-1.3.1"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.3.3",
+      "title": "Play a complete legal game of chess",
+      "description": "Apply movement and game-ending rules to play full games from opening to end. Practice by playing short games against a friend, coach, or computer at a very low difficulty, focusing on making only legal moves and noticing checks.",
+      "estimated_time_minutes": 45,
+      "prerequisites": ["LO-1.3.1", "LO-1.3.2"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.4",
+      "title": "Develop basic tactical vision",
+      "description": "Learn the most common tactical motifs so you can spot opportunities to win material and deliver checkmate. Reinforce them with lots of puzzles.",
+      "estimated_time_minutes": 220,
+      "prerequisites": ["LO-1.3"],
+      "children": ["LO-1.4.1", "LO-1.4.2", "LO-1.4.3", "LO-1.4.4", "LO-1.4.5"],
+      "is_atomic": false
+    },
+    {
+      "id": "LO-1.4.1",
+      "title": "Use forks and double attacks",
+      "description": "Learn how a single piece can attack two or more enemy pieces at once (forks). Practice by solving simple fork puzzles and creating forks in mini-games.",
+      "estimated_time_minutes": 40,
+      "prerequisites": ["LO-1.2.2", "LO-1.3.1"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.4.2",
+      "title": "Apply pins and skewers",
+      "description": "Understand how pins restrict movement and how skewers force stronger pieces to move away. Practice recognizing and creating pins and skewers in puzzles and your own games.",
+      "estimated_time_minutes": 40,
+      "prerequisites": ["LO-1.2.2", "LO-1.3.1"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.4.3",
+      "title": "Create discovered attacks and double checks",
+      "description": "Learn how moving one piece can 'discover' an attack from another piece behind it, including double checks. Practice spotting discovered attack opportunities in puzzle sets.",
+      "estimated_time_minutes": 40,
+      "prerequisites": ["LO-1.2.2", "LO-1.3.1"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.4.4",
+      "title": "Recognize simple mating patterns",
+      "description": "Study common checkmate patterns like back-rank mates, smothered mates, and queen-and-rook combinations. Practice by solving checkmate-in-one and checkmate-in-two puzzles.",
+      "estimated_time_minutes": 60,
+      "prerequisites": ["LO-1.3.2"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.4.5",
+      "title": "Practice daily tactics puzzles",
+      "description": "Reinforce all tactical themes by solving a regular diet of mixed puzzles. Aim for consistency and gradual improvement in recognition speed and accuracy.",
+      "estimated_time_minutes": 40,
+      "prerequisites": ["LO-1.4.1", "LO-1.4.2", "LO-1.4.3"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.5",
+      "title": "Learn opening principles and build a basic repertoire",
+      "description": "Understand the first principles for opening moves and start developing a simple, flexible opening repertoire for both White and Black.",
+      "estimated_time_minutes": 190,
+      "prerequisites": ["LO-1.4"],
+      "children": ["LO-1.5.1", "LO-1.5.2", "LO-1.5.3"],
+      "is_atomic": false
+    },
+    {
+      "id": "LO-1.5.1",
+      "title": "Apply opening principles in every game",
+      "description": "Learn the core opening principles: control the center, develop pieces efficiently, castle early, and connect rooks. Practice by reviewing the first 10 moves of your games and identifying where you followed or violated these principles.",
+      "estimated_time_minutes": 70,
+      "prerequisites": ["LO-1.3.3"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.5.2",
+      "title": "Choose one or two openings for White",
+      "description": "Select a simple opening system for White (like the Italian Game or London System) and learn its main ideas and first few moves. Practice by playing these openings consistently in your games.",
+      "estimated_time_minutes": 60,
+      "prerequisites": ["LO-1.5.1"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.5.3",
+      "title": "Choose flexible responses for Black",
+      "description": "Pick one or two solid defenses against e4 and d4 (such as the French Defense or Caro-Kann, and the Queen's Gambit Declined or Nimzo-Indian). Learn the key ideas and first few moves. Practice by playing these defenses consistently.",
+      "estimated_time_minutes": 60,
+      "prerequisites": ["LO-1.5.1"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.6",
+      "title": "Master basic endgames",
+      "description": "Learn the most important endgame techniques so you can convert winning positions and hold drawn ones.",
+      "estimated_time_minutes": 250,
+      "prerequisites": ["LO-1.4"],
+      "children": ["LO-1.6.1", "LO-1.6.2", "LO-1.6.3", "LO-1.6.4"],
+      "is_atomic": false
+    },
+    {
+      "id": "LO-1.6.1",
+      "title": "Deliver checkmate with king and queen vs king",
+      "description": "Learn the basic technique to mate a lone king with queen and king. Practice by setting up the position and drilling the mate until it's second nature.",
+      "estimated_time_minutes": 60,
+      "prerequisites": ["LO-1.3.2"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.6.2",
+      "title": "Deliver checkmate with king and rook vs king",
+      "description": "Learn the step-by-step method to mate with rook and king. Practice from various starting positions until you can execute it confidently.",
+      "estimated_time_minutes": 60,
+      "prerequisites": ["LO-1.3.2"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.6.3",
+      "title": "Understand basic king and pawn endgames",
+      "description": "Learn key concepts like opposition and key squares to determine if a pawn can promote. Practice solving simple K+P vs K positions.",
+      "estimated_time_minutes": 70,
+      "prerequisites": ["LO-1.6.1", "LO-1.6.2"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.6.4",
+      "title": "Study fundamental rook endgame patterns",
+      "description": "Get familiar with key concepts like the Lucena position, Philidor position, and cutting off the enemy king. Practice a few basic rook endgame exercises.",
+      "estimated_time_minutes": 60,
+      "prerequisites": ["LO-1.6.2"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.7",
+      "title": "Think strategically during games",
+      "description": "Build the habit of evaluating positions and making simple plans during the middlegame, not just reacting move by move.",
+      "estimated_time_minutes": 175,
+      "prerequisites": ["LO-1.4"],
+      "children": ["LO-1.7.1", "LO-1.7.2", "LO-1.7.3"],
+      "is_atomic": false
+    },
+    {
+      "id": "LO-1.7.1",
+      "title": "Use a pre-move blunder check routine",
+      "description": "Before every move, stop and check: does this move leave something undefended, allow a check or capture, or walk into a tactic? Practice this ritual in slow games.",
+      "estimated_time_minutes": 45,
+      "prerequisites": ["LO-1.4.5"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.7.2",
+      "title": "Evaluate piece activity and pawn structure",
+      "description": "Learn to identify which pieces are well-placed or poorly placed and how your pawn structure helps or hinders your position. Practice by comparing candidate positions and deciding which side is better.",
+      "estimated_time_minutes": 60,
+      "prerequisites": ["LO-1.5.1"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.7.3",
+      "title": "Form simple plans in the middlegame",
+      "description": "Practice creating short-term plans like 'activate my rook on the open file' or 'trade off my bad bishop.' Use these plans to guide your next few moves.",
+      "estimated_time_minutes": 70,
+      "prerequisites": ["LO-1.7.2"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.8",
+      "title": "Build a sustainable improvement routine",
+      "description": "Establish a regular practice schedule that includes playing, reviewing, and studying to keep improving beyond this course.",
+      "estimated_time_minutes": 200,
+      "prerequisites": ["LO-1.7"],
+      "children": ["LO-1.8.1", "LO-1.8.2", "LO-1.8.3", "LO-1.8.4"],
+      "is_atomic": false
+    },
+    {
+      "id": "LO-1.8.1",
+      "title": "Choose your main playing platform and time controls",
+      "description": "Pick a platform (chess.com, lichess.org, or a local club) and decide on time controls that give you enough time to think (e.g. 15|10 or 30|0). Stick with these for consistency.",
+      "estimated_time_minutes": 30,
+      "prerequisites": ["LO-1.3.3"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.8.2",
+      "title": "Review and annotate your games regularly",
+      "description": "After each game, look back to identify mistakes, missed tactics, and key moments. Add notes or use computer analysis to understand where you went wrong and how to improve.",
+      "estimated_time_minutes": 60,
+      "prerequisites": ["LO-1.8.1"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.8.3",
+      "title": "Maintain a regular puzzle and drill routine",
+      "description": "Set aside time each week for tactics puzzles and endgame drills. Consistency is key—daily short sessions beat occasional long marathons.",
+      "estimated_time_minutes": 60,
+      "prerequisites": ["LO-1.4.5", "LO-1.6.3"],
+      "children": [],
+      "is_atomic": true
+    },
+    {
+      "id": "LO-1.8.4",
+      "title": "Plan your next 8 weeks of chess study",
+      "description": "Outline how many games you'll play, how often you'll do puzzles, and what new topics you want to explore. Revisit and adjust this plan every few weeks based on your progress.",
+      "estimated_time_minutes": 50,
+      "prerequisites": ["LO-1.8.2", "LO-1.8.3"],
+      "children": [],
+      "is_atomic": true
+    }
+  ],
+  "learning_path": {
+    "total_steps": 46,
+    "phases": [
+      {
+        "phase_number": 1,
+        "label": "Foundations and legal play",
+        "goal": "Get comfortable with the board, pieces, notation, and all the rules so you can play complete legal games.",
+        "steps": [
+          {
+            "step_number": 1,
+            "objective_id": "LO-1.1.1",
+            "title": "Recognize the board layout and coordinates",
+            "phase": 1,
+            "depth_level": 1,
+            "suggested_duration_minutes": 30,
+            "activity_type": "watch/explain",
+            "notes": "Use an interactive board or app to practice naming squares quickly. Write down the coordinates for a few pieces on a printed board."
+          },
+          {
+            "step_number": 2,
+            "objective_id": "LO-1.1.2",
+            "title": "Identify pieces, starting positions, and relative value",
+            "phase": 1,
+            "depth_level": 1,
+            "suggested_duration_minutes": 30,
+            "activity_type": "watch/explain",
+            "notes": "Set up the starting position several times from memory, and make flashcards for piece values to quiz yourself."
+          },
+          {
+            "step_number": 3,
+            "objective_id": "LO-1.1.3",
+            "title": "Understand basic algebraic notation",
+            "phase": 1,
+            "depth_level": 1,
+            "suggested_duration_minutes": 30,
+            "activity_type": "watch/explain",
+            "notes": "Read a few short games in notation and try writing the moves yourself as you replay them on a board."
+          },
+          {
+            "step_number": 4,
+            "objective_id": "LO-1.2.1",
+            "title": "Move and capture with pawns",
+            "phase": 1,
+            "depth_level": 1,
+            "suggested_duration_minutes": 40,
+            "activity_type": "practice",
+            "notes": "Play a few pawn-only games where the goal is to promote or capture all opposing pawns."
+          },
+          {
+            "step_number": 5,
+            "objective_id": "LO-1.2.2",
+            "title": "Move and capture with all pieces",
+            "phase": 1,
+            "depth_level": 1,
+            "suggested_duration_minutes": 40,
+            "activity_type": "practice",
+            "notes": "Use an app or board trainer to move each piece type until you can visualize their moves instantly."
+          },
+          {
+            "step_number": 6,
+            "objective_id": "LO-1.2.3",
+            "title": "Understand and execute castling",
+            "phase": 1,
+            "depth_level": 1,
+            "suggested_duration_minutes": 30,
+            "activity_type": "watch/explain",
+            "notes": "Set up positions and practice when castling is legal and when it's not. Watch example games showing early castling."
+          },
+          {
+            "step_number": 7,
+            "objective_id": "LO-1.2.4",
+            "title": "Apply en passant and promotion rules",
+            "phase": 1,
+            "depth_level": 1,
+            "suggested_duration_minutes": 40,
+            "activity_type": "watch/explain",
+            "notes": "Set up special positions that test en passant and promotion scenarios. Confirm you understand when each is allowed."
+          },
+          {
+            "step_number": 8,
+            "objective_id": "LO-1.3.1",
+            "title": "Recognize checks and legal ways to get out of check",
+            "phase": 1,
+            "depth_level": 1,
+            "suggested_duration_minutes": 40,
+            "activity_type": "practice",
+            "notes": "Solve positions where you're in check and find all legal responses. Repeat until this becomes instinctive."
+          },
+          {
+            "step_number": 9,
+            "objective_id": "LO-1.3.2",
+            "title": "Distinguish checkmate, stalemate, and common draw rules",
+            "phase": 1,
+            "depth_level": 1,
+            "suggested_duration_minutes": 40,
+            "activity_type": "watch/explain",
+            "notes": "Look at several example positions for checkmate vs. stalemate. Practice labeling each one correctly."
+          },
+          {
+            "step_number": 10,
+            "objective_id": "LO-1.3.3",
+            "title": "Play a complete legal game of chess",
+            "phase": 1,
+            "depth_level": 1,
+            "suggested_duration_minutes": 45,
+            "activity_type": "practice",
+            "notes": "Play two or three complete slow games against a beginner-level computer or a friend, focusing only on making legal moves."
+          }
+        ]
+      },
+      {
+        "phase_number": 2,
+        "label": "Tactics and opening principles",
+        "goal": "Learn the most common tactical motifs and establish good opening habits to get solid positions every game.",
+        "steps": [
+          {
+            "step_number": 1,
+            "objective_id": "LO-1.4.1",
+            "title": "Use forks and double attacks",
+            "phase": 2,
+            "depth_level": 1,
+            "suggested_duration_minutes": 40,
+            "activity_type": "practice",
+            "notes": "Solve a set of easy fork puzzles until you can spot forks instantly in different piece configurations."
+          },
+          {
+            "step_number": 2,
+            "objective_id": "LO-1.4.2",
+            "title": "Apply pins and skewers",
+            "phase": 2,
+            "depth_level": 1,
+            "suggested_duration_minutes": 40,
+            "activity_type": "practice",
+            "notes": "Do a batch of pin and skewer puzzles, then play a short game looking for chances to pin opponent pieces."
+          },
+          {
+            "step_number": 3,
+            "objective_id": "LO-1.4.3",
+            "title": "Create discovered attacks and double checks",
+            "phase": 2,
+            "depth_level": 1,
+            "suggested_duration_minutes": 40,
+            "activity_type": "practice",
+            "notes": "Solve discovered attack puzzles and try to set up discovered checks in practice positions."
+          },
+          {
+            "step_number": 4,
+            "objective_id": "LO-1.4.4",
+            "title": "Recognize simple mating patterns",
+            "phase": 2,
+            "depth_level": 1,
+            "suggested_duration_minutes": 60,
+            "activity_type": "watch/explain",
+            "notes": "Study common mates and practice checkmate-in-one puzzles until you immediately recognize the patterns."
+          },
+          {
+            "step_number": 5,
+            "objective_id": "LO-1.4.5",
+            "title": "Practice daily tactics puzzles",
+            "phase": 2,
+            "depth_level": 1,
+            "suggested_duration_minutes": 40,
+            "activity_type": "practice",
+            "notes": "Begin a routine of solving at least 5–10 mixed tactics puzzles daily to keep your pattern recognition sharp."
+          },
+          {
+            "step_number": 6,
+            "objective_id": "LO-1.5.1",
+            "title": "Apply opening principles in every game",
+            "phase": 2,
+            "depth_level": 1,
+            "suggested_duration_minutes": 70,
+            "activity_type": "watch/explain",
+            "notes": "Watch a short video on opening principles and then annotate one of your recent games to see where you followed or violated them."
+          },
+          {
+            "step_number": 7,
+            "objective_id": "LO-1.5.2",
+            "title": "Choose one or two openings for White",
+            "phase": 2,
+            "depth_level": 1,
+            "suggested_duration_minutes": 60,
+            "activity_type": "watch/explain",
+            "notes": "Pick an opening like the Italian Game or London System, watch a quick tutorial, and play a few games using it."
+          },
+          {
+            "step_number": 8,
+            "objective_id": "LO-1.5.3",
+            "title": "Choose flexible responses for Black",
+            "phase": 2,
+            "depth_level": 1,
+            "suggested_duration_minutes": 60,
+            "activity_type": "watch/explain",
+            "notes": "Pick a defense against e4 and d4, learn the main ideas, and start using them consistently in your games as Black."
+          },
+          {
+            "step_number": 9,
+            "objective_id": "LO-1.5.1",
+            "title": "Review opening mistakes in your games",
+            "phase": 2,
+            "depth_level": 2,
+            "suggested_duration_minutes": 45,
+            "activity_type": "review",
+            "notes": "Review your recent games to find early queen adventures or unnecessary pawn moves and rewrite those openings with better moves."
+          },
+          {
+            "step_number": 10,
+            "objective_id": "LO-1.8.1",
+            "title": "Set up your regular playing environment",
+            "phase": 2,
+            "depth_level": 1,
+            "suggested_duration_minutes": 30,
+            "activity_type": "create/project",
+            "notes": "Create accounts or routines on your chosen platform and play a few 10–15 minute games to confirm everything works smoothly."
+          },
+          {
+            "step_number": 11,
+            "objective_id": "LO-1.7.1",
+            "title": "Use a blunder-check routine in games",
+            "phase": 2,
+            "depth_level": 1,
+            "suggested_duration_minutes": 45,
+            "activity_type": "practice",
+            "notes": "In a slow practice game, consciously stop before each move to run through checks, captures, and threats for both sides."
+          }
+        ]
+      },
+      {
+        "phase_number": 3,
+        "label": "Endgames and deeper thinking",
+        "goal": "Gain confidence in basic endgames and start forming simple plans using activity and pawn structure ideas.",
+        "steps": [
+          {
+            "step_number": 1,
+            "objective_id": "LO-1.6.1",
+            "title": "Practice K+Q vs K checkmate",
+            "phase": 3,
+            "depth_level": 1,
+            "suggested_duration_minutes": 45,
+            "activity_type": "practice",
+            "notes": "Set up KQ vs K and play it out as the stronger side until you can mate efficiently, then try defending as the lone king to understand resistance."
+          },
+          {
+            "step_number": 2,
+            "objective_id": "LO-1.6.2",
+            "title": "Practice K+R vs K checkmate",
+            "phase": 3,
+            "depth_level": 1,
+            "suggested_duration_minutes": 45,
+            "activity_type": "practice",
+            "notes": "Drill the rook and king checkmate method several times from different starting positions until it feels automatic."
+          },
+          {
+            "step_number": 3,
+            "objective_id": "LO-1.6.3",
+            "title": "Learn basic king and pawn vs king",
+            "phase": 3,
+            "depth_level": 1,
+            "suggested_duration_minutes": 60,
+            "activity_type": "watch/explain",
+            "notes": "Study a few model positions that show opposition and key squares, then test yourself by predicting whether a pawn can queen."
+          },
+          {
+            "step_number": 4,
+            "objective_id": "LO-1.6.4",
+            "title": "Explore simple rook endgame ideas",
+            "phase": 3,
+            "depth_level": 1,
+            "suggested_duration_minutes": 60,
+            "activity_type": "watch/explain",
+            "notes": "Look at basic rook endgame techniques and play a couple of sample positions against a computer from both sides."
+          },
+          {
+            "step_number": 5,
+            "objective_id": "LO-1.7.2",
+            "title": "Understand activity and pawn structure",
+            "phase": 3,
+            "depth_level": 1,
+            "suggested_duration_minutes": 45,
+            "activity_type": "watch/explain",
+            "notes": "Compare pairs of middlegame positions and decide which side is better based on piece activity and pawn weaknesses."
+          },
+          {
+            "step_number": 6,
+            "objective_id": "LO-1.7.3",
+            "title": "Practice making simple plans",
+            "phase": 3,
+            "depth_level": 1,
+            "suggested_duration_minutes": 45,
+            "activity_type": "practice",
+            "notes": "Take a few middlegame positions and write down a short plan before playing moves against a computer or a friend."
+          },
+          {
+            "step_number": 7,
+            "objective_id": "LO-1.8.2",
+            "title": "Review and annotate your games",
+            "phase": 3,
+            "depth_level": 1,
+            "suggested_duration_minutes": 60,
+            "activity_type": "create/project",
+            "notes": "Pick one or two recent games and replay them, marking where the evaluation changed and adding short comments about your decisions."
+          },
+          {
+            "step_number": 8,
+            "objective_id": "LO-1.8.3",
+            "title": "Build a regular puzzle and drill routine",
+            "phase": 3,
+            "depth_level": 1,
+            "suggested_duration_minutes": 45,
+            "activity_type": "practice",
+            "notes": "Plan short daily sessions mixing tactics puzzles and quick endgame drills, then complete one such session now as a template."
+          },
+          {
+            "step_number": 9,
+            "objective_id": "LO-1.4.5",
+            "title": "Deepen your tactics training",
+            "phase": 3,
+            "depth_level": 2,
+            "suggested_duration_minutes": 60,
+            "activity_type": "practice",
+            "notes": "Increase puzzle difficulty slightly and focus on thinking through each position carefully before moving, reviewing themes afterward."
+          }
+        ]
+      },
+      {
+        "phase_number": 4,
+        "label": "Integration and long-term improvement",
+        "goal": "Tie together openings, tactics, endgames, and thinking routines into a sustainable self-improvement cycle.",
+        "steps": [
+          {
+            "step_number": 1,
+            "objective_id": "LO-1.5.2",
+            "title": "Refine your White opening repertoire",
+            "phase": 4,
+            "depth_level": 2,
+            "suggested_duration_minutes": 60,
+            "activity_type": "review",
+            "notes": "Look at a handful of your recent games as White, note early problems, and adjust your first few moves based on opening principles."
+          },
+          {
+            "step_number": 2,
+            "objective_id": "LO-1.5.3",
+            "title": "Refine your Black responses",
+            "phase": 4,
+            "depth_level": 2,
+            "suggested_duration_minutes": 60,
+            "activity_type": "review",
+            "notes": "Review games as Black and identify recurring issues, then adjust your chosen replies or move orders to get safer positions."
+          },
+          {
+            "step_number": 3,
+            "objective_id": "LO-1.7.3",
+            "title": "Integrate a full thinking process",
+            "phase": 4,
+            "depth_level": 2,
+            "suggested_duration_minutes": 60,
+            "activity_type": "practice",
+            "notes": "Play a slow game focusing on combining blunder-checks, activity evaluation, and simple planning before each key move."
+          },
+          {
+            "step_number": 4,
+            "objective_id": "LO-1.6.3",
+            "title": "Review key king and pawn endings",
+            "phase": 4,
+            "depth_level": 2,
+            "suggested_duration_minutes": 45,
+            "activity_type": "review",
+            "notes": "Revisit a few critical king-and-pawn vs king positions and test yourself without notes to see if you choose the right plan."
+          },
+          {
+            "step_number": 5,
+            "objective_id": "LO-1.8.4",
+            "title": "Design your 8-week improvement plan",
+            "phase": 4,
+            "depth_level": 2,
+            "suggested_duration_minutes": 45,
+            "activity_type": "create/project",
+            "notes": "Draft a simple schedule specifying how many games, puzzles, and review sessions you will do each week and how you will track progress."
+          }
+        ]
+      }
+    ]
+  }
+};
+        
+        const ObjectiveNode = ({ objective, objectivesMap, searchTerm }) => {
+            const matchesSearch = searchTerm === '' || 
+                objective.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                objective.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                objective.description.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            if (!matchesSearch) return null;
+            
+            const hours = Math.floor(objective.estimated_time_minutes / 60);
+            const minutes = objective.estimated_time_minutes % 60;
+            const timeStr = hours > 0 
+                ? `${hours}h ${minutes}m` 
+                : `${minutes}m`;
+            
+            return (
+                <div className={`objective-node ${objective.is_atomic ? 'atomic' : ''}`}>
+                    <div className="objective-header">
+                        <span className="objective-id">{objective.id}</span>
+                        <div className="objective-title">{objective.title}</div>
+                        <span className="objective-time">{timeStr}</span>
+                    </div>
+                    <div className="objective-description">{objective.description}</div>
+                    {objective.children && objective.children.length > 0 && (
+                        <div className="objective-children">
+                            {objective.children.map(childId => (
+                                <ObjectiveNode 
+                                    key={childId} 
+                                    objective={objectivesMap[childId]} 
+                                    objectivesMap={objectivesMap}
+                                    searchTerm={searchTerm}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+        
+        const LearningPathView = ({ phases, objectivesMap, searchTerm }) => {
+            const filteredPhases = phases.map(phase => ({
+                ...phase,
+                steps: phase.steps.filter(step => {
+                    if (searchTerm === '') return true;
+                    const objective = objectivesMap[step.objective_id];
+                    return step.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           step.notes.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (objective && objective.title.toLowerCase().includes(searchTerm.toLowerCase()));
+                })
+            })).filter(phase => phase.steps.length > 0);
+            
+            if (filteredPhases.length === 0) {
+                return <div className="no-results">No steps match your search</div>;
+            }
+            
+            return (
+                <>
+                    {filteredPhases.map(phase => (
+                        <div key={phase.phase_number} className="phase-container">
+                            <div className="phase-header">
+                                <div className="phase-number">Phase {phase.phase_number}</div>
+                                <div className="phase-label">{phase.label}</div>
+                                <div className="phase-goal">{phase.goal}</div>
+                            </div>
+                            {phase.steps.map(step => {
+                                const objective = objectivesMap[step.objective_id];
+                                return (
+                                    <div key={`${phase.phase_number}-${step.step_number}`} className="step-card">
+                                        <div className="step-header">
+                                            <div className="step-number">{step.step_number}</div>
+                                            <div className="step-title">{step.title}</div>
+                                            <div className="step-duration">{step.suggested_duration_minutes} min</div>
+                                        </div>
+                                        <div className="step-meta">
+                                            <span className="step-badge badge-objective">{step.objective_id}</span>
+                                            <span className="step-badge badge-activity">{step.activity_type}</span>
+                                            <span className="step-badge badge-depth">Depth {step.depth_level}</span>
+                                        </div>
+                                        <div className="step-notes">{step.notes}</div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ))}
+                </>
+            );
+        };
+        
+        const StatsView = ({ objectives, phases }) => {
+            const totalObjectives = objectives.length;
+            const atomicObjectives = objectives.filter(o => o.is_atomic).length;
+            const totalMinutes = objectives.reduce((sum, o) => sum + o.estimated_time_minutes, 0);
+            const totalHours = (totalMinutes / 60).toFixed(1);
+            const totalSteps = phases.reduce((sum, p) => sum + p.steps.length, 0);
+            
+            return (
+                <div className="stats-grid">
+                    <div className="stat-card">
+                        <div className="stat-value">{totalObjectives}</div>
+                        <div className="stat-label">Total Learning Objectives</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-value">{atomicObjectives}</div>
+                        <div className="stat-label">Atomic (Actionable) Objectives</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-value">{totalHours}</div>
+                        <div className="stat-label">Total Hours</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-value">{phases.length}</div>
+                        <div className="stat-label">Learning Phases</div>
+                    </div>
+                    <div className="stat-card">
+                        <div className="stat-value">{totalSteps}</div>
+                        <div className="stat-label">Total Steps</div>
+                    </div>
+                </div>
+            );
+        };
+        
+        const JsonInputScreen = ({ onLoadData }) => {
+            const [jsonText, setJsonText] = useState('');
+            const [error, setError] = useState('');
+            const [success, setSuccess] = useState('');
+            
+            const handleLoadJson = () => {
+                setError('');
+                setSuccess('');
+                
+                try {
+                    const parsed = JSON.parse(jsonText);
+                    
+                    // Validate that it has the expected structure
+                    if (!parsed.objectives || !parsed.learning_path) {
+                        throw new Error('Invalid JSON structure. Must contain "objectives" and "learning_path" properties.');
+                    }
+                    
+                    setSuccess('JSON loaded successfully!');
+                    setTimeout(() => {
+                        onLoadData(parsed);
+                    }, 500);
+                } catch (e) {
+                    setError(`Error parsing JSON: ${e.message}`);
+                }
+            };
+            
+            const handleFileUpload = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        setJsonText(e.target.result);
+                        setSuccess('File loaded into editor. Click "Load Data" to visualize.');
+                    };
+                    reader.onerror = () => {
+                        setError('Error reading file');
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            
+            const handleLoadSample = () => {
+                onLoadData(defaultData);
+            };
+            
+            return (
+                <div className="json-input-container">
+                    <h1 className="json-input-title">Learning Objectives and Path Visualizer</h1>
+                    <p className="json-input-subtitle">
+                        Paste your learning objectives JSON data below, or upload a JSON file to visualize 
+                        the learning path hierarchy and phases.
+                    </p>
+                    
+                    {error && <div className="error-message">{error}</div>}
+                    {success && <div className="success-message">{success}</div>}
+                    
+                    <textarea
+                        className="json-textarea"
+                        value={jsonText}
+                        onChange={(e) => setJsonText(e.target.value)}
+                        placeholder='Paste your JSON here, e.g.:
+{
+  "topic": "Your learning topic",
+  "objectives": [...],
+  "learning_path": {...}
+}'
+                    />
+                    
+                    <div className="button-group">
+                        <button className="btn btn-primary" onClick={handleLoadJson}>
+                            Load Data
+                        </button>
+                        <label className="file-input-label">
+                            Upload JSON File
+                            <input 
+                                type="file" 
+                                className="file-input"
+                                accept=".json"
+                                onChange={handleFileUpload}
+                            />
+                        </label>
+                        <button className="btn btn-secondary" onClick={handleLoadSample}>
+                            Load Sample Data
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+        
+        const MainView = ({ data, onReset }) => {
+            const [activeTab, setActiveTab] = useState('hierarchy');
+            const [searchTerm, setSearchTerm] = useState('');
+            
+            const objectivesMap = useMemo(() => {
+                const map = {};
+                data.objectives.forEach(obj => {
+                    map[obj.id] = obj;
+                });
+                return map;
+            }, [data]);
+            
+            const rootObjective = objectivesMap[data.root_objective_id];
+            
+            return (
+                <div className="container">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '20px' }}>
+                        <div>
+                            <h1>{data.topic}</h1>
+                            <div className="subtitle">{data.audience}</div>
+                        </div>
+                        <button className="btn btn-secondary" onClick={onReset} style={{ marginTop: '10px' }}>
+                            Load Different Data
+                        </button>
+                    </div>
+                    
+                    <div className="info-box">
+                        <div><strong>Goal:</strong> {data.constraints.motivation}</div>
+                        <div className="info-row">
+                            <div className="info-item">
+                                <div className="info-label">Time Horizon</div>
+                                <div className="info-value">{data.constraints.time_horizon_weeks} weeks</div>
+                            </div>
+                            <div className="info-item">
+                                <div className="info-label">Hours per Week</div>
+                                <div className="info-value">{data.constraints.total_time_per_week_hours} hours</div>
+                            </div>
+                            <div className="info-item">
+                                <div className="info-label">Session Length</div>
+                                <div className="info-value">{data.constraints.typical_session_length_minutes} min</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="tabs">
+                        <button 
+                            className={`tab ${activeTab === 'hierarchy' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('hierarchy')}
+                        >
+                            Learning Objectives Hierarchy
+                        </button>
+                        <button 
+                            className={`tab ${activeTab === 'path' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('path')}
+                        >
+                            Learning Path (Phases & Steps)
+                        </button>
+                        <button 
+                            className={`tab ${activeTab === 'stats' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('stats')}
+                        >
+                            Statistics
+                        </button>
+                    </div>
+                    
+                    {(activeTab === 'hierarchy' || activeTab === 'path') && (
+                        <input 
+                            type="text"
+                            className="search-box"
+                            placeholder="Search objectives, titles, or descriptions..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    )}
+                    
+                    <div className="tree-container">
+                        {activeTab === 'hierarchy' && (
+                            <ObjectiveNode 
+                                objective={rootObjective} 
+                                objectivesMap={objectivesMap}
+                                searchTerm={searchTerm}
+                            />
+                        )}
+                        {activeTab === 'path' && (
+                            <LearningPathView 
+                                phases={data.learning_path.phases}
+                                objectivesMap={objectivesMap}
+                                searchTerm={searchTerm}
+                            />
+                        )}
+                        {activeTab === 'stats' && (
+                            <StatsView 
+                                objectives={data.objectives}
+                                phases={data.learning_path.phases}
+                            />
+                        )}
+                    </div>
+                </div>
+            );
+        };
+        
+        const App = () => {
+            const [data, setData] = useState(null);
+            
+            const handleLoadData = (newData) => {
+                setData(newData);
+            };
+            
+            const handleReset = () => {
+                setData(null);
+            };
+            
+            if (!data) {
+                return <JsonInputScreen onLoadData={handleLoadData} />;
+            }
+            
+            return <MainView data={data} onReset={handleReset} />;
+        };
+        
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
